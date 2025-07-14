@@ -1,0 +1,103 @@
+/* Admin Panel Styles */
+
+.admin-main {
+  max-width: 800px;
+  margin: 2em auto;
+  padding: 2em;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  font-family: 'Poppins', sans-serif;
+}
+
+.admin-main h1 {
+  font-size: 2rem;
+  margin-bottom: 1em;
+  font-weight: 600;
+}
+
+.admin-section {
+  margin-bottom: 2em;
+}
+
+.admin-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  align-items: flex-end;
+  margin-bottom: 1.5em;
+}
+.admin-form input,
+.admin-form textarea {
+  padding: 0.7em 1em;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1em;
+  font-family: 'Poppins', sans-serif;
+  min-width: 180px;
+}
+.admin-form label {
+  font-size: 0.95em;
+  font-weight: 500;
+}
+.admin-form .admin-btn {
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7em 2em;
+  font-size: 1em;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.admin-form .admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+  background: #fafafa;
+}
+.admin-table th, .admin-table td {
+  padding: 0.8em 1em;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.admin-table th {
+  background: #f3f3f3;
+  font-weight: 600;
+}
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+.admin-table .admin-action-btn {
+  background: #1b8a3d;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.4em 1em;
+  font-size: 0.95em;
+  margin-right: 0.5em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.admin-table .admin-action-btn.deactivate {
+  background: #c0392b;
+}
+
+@media (max-width: 700px) {
+  .admin-main {
+    padding: 1em;
+  }
+  .admin-form {
+    flex-direction: column;
+    gap: 0.5em;
+  }
+  .admin-table th, .admin-table td {
+    padding: 0.5em 0.5em;
+  }
+} 
