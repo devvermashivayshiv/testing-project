@@ -11,10 +11,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ users });
   }
   if (req.method === "PUT") {
-    const { userId, banned } = req.body;
+    const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "Missing userId" });
     try {
-      const user = await prisma.user.update({ where: { id: userId }, data: { banned: !!banned } });
+      // No updatable fields left, so just return the user as is
+      const user = await prisma.user.findUnique({ where: { id: userId } });
       return res.status(200).json({ user });
     } catch {
       return res.status(500).json({ error: "Failed to update user status" });
