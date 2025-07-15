@@ -16,8 +16,11 @@ model User {
   emailVerified  DateTime?
   image          String?
   accounts       Account[]
+  onboarding     Onboarding[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+   isAdmin        Boolean  @default(false) 
+   banned         Boolean  @default(false) 
 }
 
 model Account {
@@ -36,4 +39,58 @@ model Account {
   user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+}
+
+model Onboarding {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Website fields
+  hasWebsite           String
+  websiteCreationDate  String
+  numBlogs             Int
+  monthlyReach         Int
+  websitePurpose       String
+
+  // Required fields
+  blogNiche     String
+  experience    String // e.g., beginner/intermediate/expert
+  contentGoals  String
+  blogUrl       String // WordPress only
+
+  // Optional fields
+  languages     String? // Comma-separated or JSON string
+  targetAudience String? // e.g., age, region, interests
+  socialHandles String? // JSON or comma-separated
+
+  // Edit lock
+  editLocked    Boolean @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BloggingPackage {
+  id                      String   @id @default(cuid())
+  name                    String
+  price                   Float
+  description             String
+  postsPerMonth           Int
+  postsPerDay             Int
+  maxWordCountPerPost     Int
+  maxWebsites             Int
+  plagiarismCheck         Boolean  @default(false)
+  seoOptimization         Boolean  @default(false)
+  aiDetectionBypass       Boolean  @default(false)
+  withImages              Boolean  @default(false)
+  manualReview            Boolean  @default(false)
+  analyticsReport         Boolean  @default(false)
+  adsenseReadinessReport  Boolean  @default(false)
+  prioritySupport         Boolean  @default(false)
+  customOptions           Json?
+  isActive                Boolean  @default(true)
+  sortOrder               Int      @default(0)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 } 
