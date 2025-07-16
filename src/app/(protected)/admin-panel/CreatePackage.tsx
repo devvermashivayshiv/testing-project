@@ -23,6 +23,7 @@ export type BloggingPackage = {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  durationMonths: number;
 };
 
 type Props = {
@@ -58,6 +59,7 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
   const [jsonOptions, setJsonOptions] = useState("{}");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [durationMonths, setDurationMonths] = useState("1");
 
   useEffect(() => {
     if (open && mode === 'edit' && initialData) {
@@ -79,8 +81,9 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
         prioritySupport: !!initialData.prioritySupport,
       });
       setJsonOptions(initialData.customOptions ? JSON.stringify(initialData.customOptions, null, 2) : "{}");
+      setDurationMonths(initialData.durationMonths?.toString() || "1");
     } else if (open && mode === 'create') {
-      setName(""); setPrice(""); setDescription(""); setPostsPerMonth(""); setPostsPerDay(""); setMaxWordCountPerPost(""); setMaxWebsites(""); setFeatures({ ...defaultFeatures }); setJsonOptions("{}");
+      setName(""); setPrice(""); setDescription(""); setPostsPerMonth(""); setPostsPerDay(""); setMaxWordCountPerPost(""); setMaxWebsites(""); setFeatures({ ...defaultFeatures }); setJsonOptions("{}"); setDurationMonths("1");
     }
   }, [open, mode, initialData]);
 
@@ -117,6 +120,7 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
       maxWebsites,
       ...features,
       customOptions: parsedJson,
+      durationMonths: parseInt(durationMonths) || 1,
     };
     try {
       const res = await fetch(
@@ -177,6 +181,14 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
             <label>Max Websites</label>
             <input type="number" value={maxWebsites} onChange={e => setMaxWebsites(e.target.value)} placeholder="e.g. 1, 3, unlimited" style={{ width: "100%", padding: 8, marginTop: 4 }} />
           </div>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Duration</label>
+          <select value={durationMonths} onChange={e => setDurationMonths(e.target.value)} style={{ width: "100%", padding: 8, marginTop: 4 }}>
+            <option value="1">1 Month</option>
+            <option value="6">6 Months</option>
+            <option value="12">1 Year</option>
+          </select>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label>Features</label>

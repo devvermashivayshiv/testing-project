@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "../../../cssdesign/dashboard.css";
 import { useRouter } from "next/navigation";
+import UserProfile from "./UserProfile";
 
 function safeValue(val: unknown): string | number {
   if (typeof val === 'string' || typeof val === 'number') return val;
@@ -454,12 +455,15 @@ export default function Dashboard() {
       <div className="dashboard-tabs">
         <button className={`dashboard-tab${tab === "overview" ? " active" : ""}`} onClick={() => setTab("overview")}>Overview</button>
         <button className={`dashboard-tab${tab === "onboarding" ? " active" : ""}`} onClick={() => setTab("onboarding")}>Onboarding</button>
+        <button className={`dashboard-tab${tab === "profile" ? " active" : ""}`} onClick={() => setTab("profile")}>Profile</button>
       </div>
       <div className="dashboard-tab-content">
         {loading ? <div>Loading...</div> : (
           tab === "overview"
             ? <OverviewTab onboarding={onboarding} />
-            : <OnboardingTab onboarding={onboarding} editable={editable} refresh={fetchOnboarding} />
+            : tab === "onboarding"
+              ? <OnboardingTab onboarding={onboarding} editable={editable} refresh={fetchOnboarding} />
+              : <UserProfile />
         )}
       </div>
     </main>

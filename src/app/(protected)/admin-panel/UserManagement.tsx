@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { BloggingPackage } from "./CreatePackage";
 
 // Define User and Onboarding types
 interface Onboarding {
@@ -32,6 +33,11 @@ interface User {
   onboarding?: Onboarding[];
 }
 
+interface UserActivePlan {
+  package?: { name: string };
+  endDate?: string;
+}
+
 export default function UserManagement() {
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -44,6 +50,11 @@ export default function UserManagement() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [onboarding, setOnboarding] = useState<Onboarding | null>(null);
   const [onboardingLoading, setOnboardingLoading] = useState<boolean>(false);
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [allPackages, setAllPackages] = useState<BloggingPackage[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string>("");
+  const [userActivePlan, setUserActivePlan] = useState<UserActivePlan | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -116,6 +127,68 @@ export default function UserManagement() {
     }
   };
 
+  const fetchAllPackages = async () => {
+    const res = await fetch("/api/admin/packages");
+    const data = await res.json();
+    setAllPackages(data.packages || []);
+  };
+
+  const fetchUserActivePlan = async (userId: string) => {
+    setPlanLoading(true);
+    const res = await fetch(`/api/admin/users/${userId}`);
+    const data = await res.json();
+    setUserActivePlan(data.user?.subscriptions?.[0] || null);
+    setPlanLoading(false);
+  };
+
+  const openPlanModal = (user: User) => {
+    setModalUser(user);
+    setPlanModalOpen(true);
+    setSelectedPlan("");
+    setUserActivePlan(null);
+    fetchAllPackages();
+    fetchUserActivePlan(user.id);
+  };
+
+  const handleAssignPlan = async () => {
+    if (!modalUser || !selectedPlan) return;
+    setActionLoading("assign-plan");
+    try {
+      const res = await fetch(`/api/admin/users/${modalUser.id}/add-plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId: selectedPlan })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to assign plan");
+      } else {
+        fetchUserActivePlan(modalUser.id);
+        fetchUsers();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRemovePlan = async () => {
+    if (!modalUser) return;
+    setActionLoading("remove-plan");
+    try {
+      const res = await fetch(`/api/admin/users/${modalUser.id}/remove-plan`, {
+        method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to remove plan");
+      } else {
+        setUserActivePlan(null);
+        fetchUsers();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', background: '#fff', borderRadius: 10, boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: 24 }}>
       <h2 style={{ marginBottom: 18 }}>User Management</h2>
@@ -182,10 +255,9 @@ export default function UserManagement() {
             <button style={{ marginRight: 8, marginBottom: 8 }} onClick={() => handleBan(modalUser)} disabled={!!actionLoading}>{modalUser.banned ? "Unban (w)" : "Ban (w)"}</button>
             <button style={{ marginRight: 8, marginBottom: 8 }} onClick={() => handleAdmin(modalUser)} disabled={!!actionLoading}>{modalUser.isAdmin ? "Remove Admin (w)" : "Make Admin (w)"}</button>
             <button style={{ marginRight: 8, marginBottom: 8 }} onClick={() => handleViewOnboarding(modalUser)} disabled={onboardingLoading}>{onboardingLoading ? "Loading..." : "View Onboarding (w)"}</button>
-            <button style={{ marginRight: 8, marginBottom: 8 }}>View Plan/Subscription (n)</button>
+            <button style={{ marginRight: 8, marginBottom: 8 }} onClick={() => openPlanModal(modalUser)}>Add/Remove Plan</button>
             <button style={{ marginRight: 8, marginBottom: 8 }}>View Automation Usage (n)</button>
             <button style={{ marginRight: 8, marginBottom: 8, background: '#c0392b', color: '#fff' }} onClick={() => handleDelete(modalUser)} disabled={!!actionLoading}>Delete (w)</button>
-            <button style={{ marginRight: 8, marginBottom: 8 }}>Add/Remove Plan (n)</button>
             <button style={{ marginRight: 8, marginBottom: 8 }}>Manual Expiry/Extension (n)</button>
             <button style={{ marginRight: 8, marginBottom: 8 }}>View Login History (n)</button>
             {onboarding && (
@@ -201,6 +273,38 @@ export default function UserManagement() {
             )}
             <div style={{ marginTop: 18, textAlign: 'right' }}>
               <button onClick={() => { setModalUser(null); setOnboarding(null); }} style={{ background: '#eee', color: '#222', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 500, cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {planModalOpen && modalUser && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: 10, padding: 32, minWidth: 340, maxWidth: 420, boxShadow: '0 2px 16px rgba(0,0,0,0.13)' }}>
+            <h3>Manage Plan for {modalUser.name || modalUser.email}</h3>
+            {planLoading ? <div>Loading...</div> : userActivePlan ? (
+              <>
+                <div style={{ marginBottom: 12 }}>
+                  <b>Active Plan:</b> {userActivePlan.package?.name} <br />
+                  <b>Expires:</b> {userActivePlan.endDate ? new Date(userActivePlan.endDate).toLocaleString() : "-"}
+                </div>
+                <button onClick={handleRemovePlan} disabled={!!actionLoading} style={{ background: '#c0392b', color: '#fff', borderRadius: 6, padding: '8px 20px', fontWeight: 500, marginBottom: 12 }}>Remove Plan</button>
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: 12 }}>
+                  <label>Select Plan:</label>
+                  <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 4 }}>
+                    <option value="">-- Select --</option>
+                    {allPackages.map(pkg => (
+                      <option key={pkg.id} value={pkg.id}>{pkg.name} (₹{pkg.price}, {pkg.durationMonths} month{pkg.durationMonths > 1 ? 's' : ''})</option>
+                    ))}
+                  </select>
+                </div>
+                <button onClick={handleAssignPlan} disabled={!selectedPlan || !!actionLoading} style={{ background: '#0070f3', color: '#fff', borderRadius: 6, padding: '8px 20px', fontWeight: 500 }}>Assign Plan</button>
+              </>
+            )}
+            <div style={{ marginTop: 18, textAlign: 'right' }}>
+              <button onClick={() => { setPlanModalOpen(false); setUserActivePlan(null); }} style={{ background: '#eee', color: '#222', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 500, cursor: 'pointer' }}>Close</button>
             </div>
           </div>
         </div>
