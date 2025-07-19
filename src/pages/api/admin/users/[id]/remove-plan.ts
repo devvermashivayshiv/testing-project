@@ -20,5 +20,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     where: { id: active.id },
     data: { endDate: now }
   });
+  // If free trial, reset user.freeTrialActive, freeTrialStartedAt, freeTrialEndsAt
+  const pkg = await prisma.bloggingPackage.findUnique({ where: { id: active.packageId } });
+  if (pkg && pkg.price === 0) {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        freeTrialActive: false,
+        freeTrialStartedAt: null,
+        freeTrialEndsAt: null,
+      }
+    });
+  }
   res.status(200).json({ success: true });
 } 

@@ -23,7 +23,9 @@ export type BloggingPackage = {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
-  durationMonths: number;
+  durationType: 'days' | 'months';
+  durationValue: number;
+  freeTrial?: boolean; // Add this for form use
 };
 
 type Props = {
@@ -59,7 +61,9 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
   const [jsonOptions, setJsonOptions] = useState("{}");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [durationMonths, setDurationMonths] = useState("1");
+  const [durationType, setDurationType] = useState<'days' | 'months'>('months');
+  const [durationValue, setDurationValue] = useState('1');
+  // Removed freeTrial state as it's not used in the form
 
   useEffect(() => {
     if (open && mode === 'edit' && initialData) {
@@ -81,9 +85,11 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
         prioritySupport: !!initialData.prioritySupport,
       });
       setJsonOptions(initialData.customOptions ? JSON.stringify(initialData.customOptions, null, 2) : "{}");
-      setDurationMonths(initialData.durationMonths?.toString() || "1");
+      setDurationType((initialData.durationType as 'days' | 'months') || 'months');
+      setDurationValue(initialData.durationValue?.toString() || '1');
+      // Removed setFreeTrial as it's not used
     } else if (open && mode === 'create') {
-      setName(""); setPrice(""); setDescription(""); setPostsPerMonth(""); setPostsPerDay(""); setMaxWordCountPerPost(""); setMaxWebsites(""); setFeatures({ ...defaultFeatures }); setJsonOptions("{}"); setDurationMonths("1");
+      setName(""); setPrice(""); setDescription(""); setPostsPerMonth(""); setPostsPerDay(""); setMaxWordCountPerPost(""); setMaxWebsites(""); setFeatures({ ...defaultFeatures }); setJsonOptions("{}"); setDurationType('months'); setDurationValue('1');
     }
   }, [open, mode, initialData]);
 
@@ -120,7 +126,8 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
       maxWebsites,
       ...features,
       customOptions: parsedJson,
-      durationMonths: parseInt(durationMonths) || 1,
+      durationType,
+      durationValue: parseInt(durationValue) || 1,
     };
     try {
       const res = await fetch(
@@ -182,13 +189,18 @@ export default function CreatePackage({ open, onClose, onCreated, mode = 'create
             <input type="number" value={maxWebsites} onChange={e => setMaxWebsites(e.target.value)} placeholder="e.g. 1, 3, unlimited" style={{ width: "100%", padding: 8, marginTop: 4 }} />
           </div>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Duration</label>
-          <select value={durationMonths} onChange={e => setDurationMonths(e.target.value)} style={{ width: "100%", padding: 8, marginTop: 4 }}>
-            <option value="1">1 Month</option>
-            <option value="6">6 Months</option>
-            <option value="12">1 Year</option>
-          </select>
+        <div style={{ marginBottom: 12, display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <label>Duration Type</label>
+            <select value={durationType} onChange={e => setDurationType(e.target.value as 'days' | 'months')} style={{ width: "100%", padding: 8, marginTop: 4 }}>
+              <option value="days">Days</option>
+              <option value="months">Months</option>
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Duration Value</label>
+            <input type="number" value={durationValue} onChange={e => setDurationValue(e.target.value)} placeholder="e.g. 2" style={{ width: "100%", padding: 8, marginTop: 4 }} min={1} />
+          </div>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label>Features</label>

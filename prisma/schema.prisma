@@ -22,6 +22,17 @@ model User {
    isAdmin        Boolean  @default(false) 
    banned         Boolean  @default(false) 
    subscriptions  UserSubscription[]  
+   freeTrialActive Boolean  @default(false) // Free trial status (off by default)
+
+   freeTrialStartedAt DateTime?           // When free trial started (null if not started)
+   freeTrialEndsAt DateTime?              // When free trial ends (null if not started)
+   automationActive Boolean @default(false) // Is automation running for this user?
+   
+   // Automation status tracking
+   automationStartedAt DateTime?          // When automation was started
+   automationStatus String @default("idle") // idle, running, paused, completed, failed
+   lastAutomationRun DateTime?            // Last time automation ran
+   automationRunsCount Int @default(0)    // Total number of automation runs
 }
 
 model Account {
@@ -94,7 +105,8 @@ model BloggingPackage {
   sortOrder               Int      @default(0)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
-  durationMonths          Int      @default(1) // Duration in months
+  durationType            String   @default("months") // 'days' or 'months'
+  durationValue           Int      @default(1)         // Number of days or months
   subscriptions           UserSubscription[]
 }
 

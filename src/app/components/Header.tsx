@@ -23,6 +23,7 @@ export default function Header() {
         <Link href="/" onClick={handleNavClick}>Home</Link>
         <Link href="/contact-us" onClick={handleNavClick}>Contact</Link>
         <Link href="/plans" onClick={handleNavClick}>Plans</Link>
+        <Link href="/tutorial" onClick={handleNavClick}>Help</Link>
         {/* Legal Dropdown */}
         <div className="header-dropdown" onMouseEnter={() => setLegalOpen(true)} onMouseLeave={() => setLegalOpen(false)}>
           <button className="header-dropdown-btn">Legal <span style={{fontSize: '0.8em', marginLeft: 4}}>▼</span></button>

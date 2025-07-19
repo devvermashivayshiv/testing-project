@@ -17,7 +17,7 @@ declare global {
 export default function PlansPage() {
   const [plans, setPlans] = useState<BloggingPackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userActivePlanId, setUserActivePlanId] = useState<string | null>(null);
+  // Removed unused state variables
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -31,6 +31,11 @@ export default function PlansPage() {
   }, []);
 
   const { data: session } = useSession();
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    if (!session || !session.user) return;
+    fetch('/api/user/me').then(res => res.json()).then(data => setUser(data.user));
+  }, [session]);
 
   useEffect(() => {
     const fetchActivePlan = async () => {
@@ -38,10 +43,7 @@ export default function PlansPage() {
       const res = await fetch(`/api/user/me`);
       const data = await res.json();
       if (data.user) {
-        const subRes = await fetch(`/api/admin/users/${data.user.id}`);
-        const subData = await subRes.json();
-        const active = subData.user?.subscriptions?.[0];
-        setUserActivePlanId(active?.package?.id || null);
+        // Removed unused active plan tracking - no longer needed
       }
     };
     fetchActivePlan();
@@ -130,37 +132,77 @@ export default function PlansPage() {
     }
   };
 
+  const claimFreeTrial = async (packageId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/user/claim-free-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to claim free trial");
+      // Optionally, refresh user state
+      window.location.reload();
+    } catch (err: unknown) {
+      console.error("Failed to claim free trial:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const userHasActiveTrial = user && user.freeTrialActive && typeof user.freeTrialEndsAt === 'string' && new Date(user.freeTrialEndsAt) > new Date();
+  const userHasClaimedTrial = user && user.freeTrialStartedAt;
+
   return (
     <main className="plans-main">
       <h1 className="plans-title">Choose Your Plan</h1>
       {loading ? <div className="plans-loading">Loading plans...</div> : (
         <div className="plans-grid">
-          {plans.length === 0 ? <div>No plans available.</div> : plans.map(plan => (
-            <div className="plan-card" key={plan.id}>
-              <div className="plan-name">{plan.name}</div>
-              <div className="plan-price">₹{plan.price}</div>
-              <div className="plan-desc">{plan.description}</div>
-              <div className="plan-meta">
-                <span><b>{plan.postsPerMonth}</b> posts/month</span>
-                <span><b>{plan.maxWebsites}</b> website{plan.maxWebsites > 1 ? 's' : ''}</span>
+          {plans.length === 0 ? <div>No plans available.</div> : plans.map(plan => {
+            console.log('plan:', plan);
+            console.log('user:', user);
+            return (
+              <div className="plan-card" key={plan.id}>
+                <div className="plan-name">{plan.name}</div>
+                <div className="plan-price">₹{plan.price}</div>
+                {/* Remove trial expiry display here */}
+                <div className="plan-desc">{plan.description}</div>
+                <div className="plan-meta">
+                  <span><b>{plan.postsPerMonth}</b> posts/month</span>
+                  <span><b>{plan.maxWebsites}</b> website{plan.maxWebsites > 1 ? 's' : ''}</span>
+                </div>
+                <ul className="plan-features">
+                  {plan.plagiarismCheck && <li>Plagiarism Check</li>}
+                  {plan.seoOptimization && <li>SEO Optimization</li>}
+                  {plan.aiDetectionBypass && <li>AI Detection Bypass</li>}
+                  {plan.withImages && <li>With Images</li>}
+                  {plan.manualReview && <li>Manual Review</li>}
+                  {plan.analyticsReport && <li>Analytics Report</li>}
+                  {plan.adsenseReadinessReport && <li>AdSense Readiness Report</li>}
+                  {plan.prioritySupport && <li>Priority Support</li>}
+                </ul>
+                {plan.price === 0 ? (
+                  userHasActiveTrial ? (
+                    <>
+                      <div style={{ color: '#256029', fontWeight: 500, marginBottom: 6 }}>
+                        Trial Expires: {user && typeof user.freeTrialEndsAt === 'string' ? new Date(user.freeTrialEndsAt).toLocaleString() : '-'}
+                      </div>
+                      <button disabled className="plan-buy-btn">Trial Active</button>
+                    </>
+                  ) : userHasClaimedTrial ? (
+                    <div style={{ color: '#888', fontWeight: 500, margin: '12px 0', fontSize: 15, textAlign: 'center', opacity: 0.7 }}>
+                      Trial Expired on {user && typeof user.freeTrialEndsAt === 'string' ? new Date(user.freeTrialEndsAt).toLocaleString() : '-'}
+                    </div>
+                  ) : (
+                    <button onClick={() => claimFreeTrial(plan.id)} className="plan-buy-btn" disabled={loading}>Claim Free Trial</button>
+                  )
+                ) : (
+                  <button className="plan-buy-btn" onClick={() => handleBuyNow(plan)}>Buy Now</button>
+                )}
               </div>
-              <ul className="plan-features">
-                {plan.plagiarismCheck && <li>Plagiarism Check</li>}
-                {plan.seoOptimization && <li>SEO Optimization</li>}
-                {plan.aiDetectionBypass && <li>AI Detection Bypass</li>}
-                {plan.withImages && <li>With Images</li>}
-                {plan.manualReview && <li>Manual Review</li>}
-                {plan.analyticsReport && <li>Analytics Report</li>}
-                {plan.adsenseReadinessReport && <li>AdSense Readiness Report</li>}
-                {plan.prioritySupport && <li>Priority Support</li>}
-              </ul>
-              {userActivePlanId === plan.id ? (
-                <button className="plan-buy-btn" disabled style={{ background: '#28a745' }}>Active Now</button>
-              ) : (
-                <button className="plan-buy-btn" onClick={() => handleBuyNow(plan)}>Buy Now</button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </main>

@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session || !session.user?.email) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+  const user = await prisma.user.findUnique({ where: { email: session.user.email }, select: { id: true, automationActive: true, name: true, email: true, emailVerified: true, image: true, createdAt: true, updatedAt: true, isAdmin: true, banned: true } });
   if (!user) return res.status(401).json({ error: "User not found" });
 
   if (req.method === "GET") {
@@ -58,10 +58,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "PUT") {
-    // Only allow if not locked
+    // Only allow if not locked and automation not active
     const onboarding = await prisma.onboarding.findUnique({ where: { userId: user.id } });
     if (!onboarding) return res.status(404).json({ error: "Onboarding not found" });
     if (onboarding.editLocked) return res.status(403).json({ error: "Onboarding is locked and cannot be edited" });
+    if (user.automationActive) return res.status(403).json({ error: "Onboarding cannot be edited while automation is running." });
     const {
       hasWebsite,
       websiteCreationDate,

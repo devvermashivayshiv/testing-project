@@ -24,7 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         prioritySupport,
         customOptions,
         isActive,
-        sortOrder
+        sortOrder,
+        durationType,
+        durationValue
       } = req.body;
 
       if (!name || !price) {
@@ -51,6 +53,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           customOptions: customOptions ? customOptions : {},
           isActive: typeof isActive === 'boolean' ? isActive : true,
           sortOrder: typeof sortOrder === 'number' ? sortOrder : 0,
+          durationType: durationType || 'months',
+          durationValue: typeof durationValue === 'number' ? durationValue : (durationValue ? parseInt(durationValue) : 1),
         },
       });
       return res.status(201).json({ package: pkg });

@@ -296,7 +296,7 @@ export default function UserManagement() {
                   <select value={selectedPlan} onChange={e => setSelectedPlan(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 4 }}>
                     <option value="">-- Select --</option>
                     {allPackages.map(pkg => (
-                      <option key={pkg.id} value={pkg.id}>{pkg.name} (₹{pkg.price}, {pkg.durationMonths} month{pkg.durationMonths > 1 ? 's' : ''})</option>
+                      <option key={pkg.id} value={pkg.id}>{pkg.name} (₹{pkg.price}, {pkg.durationValue} {pkg.durationType}{pkg.durationValue > 1 ? 's' : ''})</option>
                     ))}
                   </select>
                 </div>

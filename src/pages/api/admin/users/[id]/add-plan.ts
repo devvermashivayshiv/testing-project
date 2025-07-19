@@ -23,7 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
   if (active) return res.status(400).json({ error: "User already has this plan active" });
   const endDate = new Date(now);
-  endDate.setMonth(endDate.getMonth() + (pkg.durationMonths || 1));
+  if (pkg.durationType === 'months') {
+    endDate.setMonth(endDate.getMonth() + pkg.durationValue);
+  } else {
+    endDate.setDate(endDate.getDate() + pkg.durationValue);
+  }
   const sub = await prisma.userSubscription.create({
     data: {
       userId: id,

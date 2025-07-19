@@ -39,7 +39,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Calculate endDate
     const startDate = new Date();
     const endDate = new Date(startDate);
-    endDate.setMonth(endDate.getMonth() + (pkg.durationMonths || 1));
+    if (pkg.durationType === 'months') {
+      endDate.setMonth(endDate.getMonth() + pkg.durationValue);
+    } else {
+      endDate.setDate(endDate.getDate() + pkg.durationValue);
+    }
     // Save subscription
     await prisma.userSubscription.create({
       data: {

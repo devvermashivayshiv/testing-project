@@ -1,13 +1,15 @@
 /* Dashboard Page Styles */
 
 .dashboard-main {
-  max-width: 600px;
-  margin: 2em auto;
-  padding: 2em;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  font-family: 'Poppins', sans-serif;
+  width: 100vw;
+  max-width: 100vw;
+  min-height: 80vh;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
 }
 
 .dashboard-main h1 {
@@ -144,26 +146,35 @@
 
 .dashboard-tabs {
   display: flex;
-  gap: 1.2em;
-  margin: 2em 0 1.5em 0;
-  border-bottom: 2px solid #f3f3f3;
+  flex-direction: row !important;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  max-width: 700px;
+  scrollbar-width: thin;
+  scrollbar-color: #1976d2 #f2f2f2;
+  -webkit-overflow-scrolling: touch;
 }
+
 .dashboard-tab {
-  background: none;
+  background: #f7f7f7;
   border: none;
-  border-bottom: 3px solid transparent;
-  font-size: 1.1em;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 28px;
+  font-size: 1.1rem;
   font-weight: 500;
-  color: #888;
-  padding: 0.7em 1.5em 0.7em 1.5em;
+  color: #222;
   cursor: pointer;
-  transition: color 0.2s, border-bottom 0.2s;
-  outline: none;
+  transition: background 0.2s, color 0.2s;
+  min-width: 120px;
+  white-space: nowrap;
 }
 .dashboard-tab.active {
+  background: #fff;
   color: #1976d2;
-  border-bottom: 3px solid #1976d2;
-  background: #f6faff;
+  border-bottom: 2px solid #1976d2;
 }
 .dashboard-tab:disabled {
   color: #ccc;
@@ -171,12 +182,27 @@
   background: none;
 }
 .dashboard-tab-content {
-  margin-top: 1.5em;
+  width: 100%;
+  max-width: 700px;
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-  padding: 2em 1.5em 1.5em 1.5em;
-  min-height: 220px;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 800px), (max-width: 500px) {
+  .dashboard-tabs {
+    max-width: 100vw;
+    padding-left: 0;
+    padding-right: 0;
+    flex-direction: row !important;
+  }
+  .dashboard-tab {
+    padding: 10px 16px;
+    font-size: 1rem;
+    min-width: 90px;
+  }
 }
 
 @media (max-width: 600px) {

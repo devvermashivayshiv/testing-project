@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import "../../../cssdesign/dashboard.css";
 import { useRouter } from "next/navigation";
 import UserProfile from "./UserProfile";
+import YouTubeTab from "./YouTubeTab";
+import SocialMediaTab from "./SocialMediaTab";
+import Link from "next/link";
 
 function safeValue(val: unknown): string | number {
   if (typeof val === 'string' || typeof val === 'number') return val;
@@ -433,11 +436,63 @@ function OnboardingTab({ onboarding, editable, refresh }: { onboarding: Onboardi
   );
 }
 
+function Checklist({ user, onboarding, onStartAutomation, onStopAutomation, automationLoading }: { user: Record<string, unknown> | null, onboarding: unknown, onStartAutomation: () => void, onStopAutomation: () => void, automationLoading: boolean }) {
+  const steps = [
+    {
+      label: "Onboarding Complete",
+      done: !!onboarding,
+    },
+    {
+      label: "Plan Active",
+      done: user && (user.freeTrialActive || (user.subscriptions && Array.isArray(user.subscriptions) && user.subscriptions.length > 0)),
+    },
+    {
+      label: "Automation Started",
+      done: user && user.automationActive,
+    },
+  ];
+  const canStartAutomation = steps[0].done && steps[1].done && !steps[2].done;
+  const canStopAutomation = steps[2].done;
+  return (
+    <div className="dashboard-checklist" style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.2em 1.5em', marginBottom: 24, maxWidth: 700, width: '100%' }}>
+      <h3 style={{ marginBottom: 12, fontWeight: 600, fontSize: 20 }}>Your Progress</h3>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'row', gap: 32 }}>
+        {steps.map((step) => (
+          <li key={step.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 22, color: step.done ? '#27ae60' : '#bbb', fontWeight: 700 }}>
+              {step.done ? '✔' : '○'}
+            </span>
+            <span style={{ fontWeight: 500 }}>{step.label}</span>
+          </li>
+        ))}
+      </ul>
+      <div style={{ marginTop: 18, display: 'flex', gap: 16 }}>
+        <button
+          onClick={onStartAutomation}
+          disabled={!canStartAutomation || automationLoading}
+          style={{ padding: '10px 28px', background: canStartAutomation ? '#1976d2' : '#ccc', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: canStartAutomation ? 'pointer' : 'not-allowed', opacity: automationLoading ? 0.7 : 1 }}
+        >
+          {automationLoading && canStartAutomation ? 'Starting...' : 'Start Automation'}
+        </button>
+        <button
+          onClick={onStopAutomation}
+          disabled={!canStopAutomation || automationLoading}
+          style={{ padding: '10px 28px', background: canStopAutomation ? '#c0392b' : '#ccc', color: '#fff', border: 'none', borderRadius: 6, fontWeight: 600, fontSize: 16, cursor: canStopAutomation ? 'pointer' : 'not-allowed', opacity: automationLoading ? 0.7 : 1 }}
+        >
+          {automationLoading && canStopAutomation ? 'Stopping...' : 'Stop Automation'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [tab, setTab] = useState("overview");
   const [onboarding, setOnboarding] = useState<OnboardingType | null>(null);
   const [editable, setEditable] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  const [automationLoading, setAutomationLoading] = useState(false);
 
   const fetchOnboarding = async () => {
     setLoading(true);
@@ -448,14 +503,48 @@ export default function Dashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchOnboarding(); }, []);
+  useEffect(() => {
+    fetchOnboarding();
+    fetch('/api/user/me').then(res => res.json()).then(data => setUser(data.user));
+  }, []);
+
+  const handleStartAutomation = async () => {
+    setAutomationLoading(true);
+    try {
+      const res = await fetch('/api/user/start-automation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'start' }) });
+      if (!res.ok) throw new Error('Failed to start automation');
+      window.location.reload();
+    } catch {
+      alert('Failed to start automation');
+    } finally {
+      setAutomationLoading(false);
+    }
+  };
+  const handleStopAutomation = async () => {
+    setAutomationLoading(true);
+    try {
+      const res = await fetch('/api/user/start-automation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop' }) });
+      if (!res.ok) throw new Error('Failed to stop automation');
+      window.location.reload();
+    } catch {
+      alert('Failed to stop automation');
+    } finally {
+      setAutomationLoading(false);
+    }
+  };
 
   return (
     <main className="dashboard-main">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <Link href="/tutorial" style={{ color: '#1976d2', fontWeight: 500, textDecoration: 'underline', fontSize: 16 }}>Help</Link>
+      </div>
+      <Checklist user={user} onboarding={onboarding} onStartAutomation={handleStartAutomation} onStopAutomation={handleStopAutomation} automationLoading={automationLoading} />
       <div className="dashboard-tabs">
         <button className={`dashboard-tab${tab === "overview" ? " active" : ""}`} onClick={() => setTab("overview")}>Overview</button>
         <button className={`dashboard-tab${tab === "onboarding" ? " active" : ""}`} onClick={() => setTab("onboarding")}>Onboarding</button>
         <button className={`dashboard-tab${tab === "profile" ? " active" : ""}`} onClick={() => setTab("profile")}>Profile</button>
+        <button className={`dashboard-tab${tab === "youtube" ? " active" : ""}`} onClick={() => setTab("youtube")}>YouTube</button>
+        <button className={`dashboard-tab${tab === "social" ? " active" : ""}`} onClick={() => setTab("social")}>Social Media</button>
       </div>
       <div className="dashboard-tab-content">
         {loading ? <div>Loading...</div> : (
@@ -463,7 +552,13 @@ export default function Dashboard() {
             ? <OverviewTab onboarding={onboarding} />
             : tab === "onboarding"
               ? <OnboardingTab onboarding={onboarding} editable={editable} refresh={fetchOnboarding} />
-              : <UserProfile />
+              : tab === "profile"
+                ? <UserProfile />
+                : tab === "youtube"
+                  ? <YouTubeTab />
+                  : tab === "social"
+                    ? <SocialMediaTab />
+                    : null
         )}
       </div>
     </main>
